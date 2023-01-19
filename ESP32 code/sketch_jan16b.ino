@@ -26,7 +26,8 @@ PubSubClient client(espClient);
 float duration,distance,volume,newVol;
 int Avgvol;
 float area =2550.336;
-void ultrasonic_control(){
+
+void callback(const MQTT::Publish& pub) {
     digitalWrite(trigPin,LOW);
     delayMicroseconds(2);
     digitalWrite(trigPin,HIGH);
@@ -37,47 +38,44 @@ void ultrasonic_control(){
     volume =distance *area;
     newVol =(204026.88-volume);
     Avgvol =int(newVol/1000);
-
-
-        if(distance >10.0){
+    String payload_received = pub.payload_string();
+    if(distance >10.0 && payload_received == "on"){
             //TURN ON MOTOR
             digitalWrite(highPin,HIGH);
             digitalWrite(lowPin,LOW);
             analogWrite(enablePin,100);
-        }else{
-            //TURN OFF MOTOR
-            digitalWrite(highPin,LOW);
-            digitalWrite(lowPin,LOW);
-            analogWrite(enablePin,0);
-        }
-        if(distance <=400 || distance >=2){
+    }
+
+    else if (payload_received == "on" && distance < 10.0) {
+        digitalWrite(highPin,HIGH);
+        digitalWrite(lowPin,LOW);
+        analogWrite(enablePin,100);
+        Serial.println("Switch is on");
+        
+    }
+    else if (payload_received == "off" && distance > 10.0){
+      digitalWrite(highPin,HIGH);
+      digitalWrite(lowPin,LOW);
+      analogWrite(enablePin,0);
+      Serial.println("Switch is off");
+    }
+    else{
+      digitalWrite(highPin,LOW);
+      digitalWrite(lowPin,LOW);
+      analogWrite(enablePin,0);
+      Serial.println("Switch is off");
+
+    }
+    if(distance <=400 || distance >=2){
       Serial.println("Distance = " + String(distance) + " cm");
       Serial.println("Duration" + String(duration) + " us.");
       client.publish(mqttdistance, String(distance).c_str());
       client.publish(mqttduration, String(duration).c_str());
       client.publish(mqttvolume,String(Avgvol).c_str());
-} else{
-     Serial.println("Out of range.");
-}delay(500);
-}
-
-
-
-void callback(const MQTT::Publish& pub) {
-    String payload_received = pub.payload_string();
-    if (payload_received == "on") {
-        digitalWrite(highPin,HIGH);
-        digitalWrite(lowPin,LOW);
-        analogWrite(enablePin,100);
-        delay(5000);
-        Serial.println("Switch is on");
-        
+      delay(500);
     }
-    else {
-      digitalWrite(highPin,LOW);
-      digitalWrite(lowPin,LOW);
-      analogWrite(enablePin,0);
-      Serial.println("Switch is off");
+    else{
+      Serial.println("Out of range");
     }
   
     
@@ -88,6 +86,7 @@ void reconnect() {
     while (!client.connected()) {
         if (client.connect("My esp")) {
             Serial.println("Connected to MQTT broker");
+            client.subscribe(mqtt_motor_control);
            
         } else {
             Serial.print("Failed to connect, try again in 5 seconds");
@@ -125,10 +124,6 @@ void loop() {
     if (!client.connected()) {
         reconnect();
     }
-    //client.loop();
-    client.subscribe(mqtt_motor_control);
-    ultrasonic_control();
-
+    client.loop();
     
-
 }
