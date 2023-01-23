@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script type="text/javascript" src="https://cdn.fusioncharts.com/fusioncharts/latest/fusioncharts.js"></script>
+	<script type="text/javascript" src="https://cdn.fusioncharts.com/fusioncharts/latest/themes/fusioncharts.theme.fusion.js"></script>
+    <style>
+        *, *::before, *::after {
+            padding: 0;
+            margin: 0;
+            box-sizing: border-box;
+            list-style: none;
+            }
+
+            body {
+            color: #111;
+            font-family: sans-serif;
+            }
+            body main {
+            width: 100%;
+            height: 100vh;
+            display: flex;
+            flex-direction: row;
+            }
+            body main .sidenav {
+            width: 20vw;
+            background-color: #eff1fe;
+            }
+            body main .sidenav h1 {
+            margin: 20px;
+            }
+            body main .sidenav div {
+            margin-top: 2em;
+            }
+            body main .sidenav div ul li {
+            padding: 10px 30px;
+            }
+            body main .sidenav div ul #active {
+            background-color: #fff;
+            }
+            body main #main {
+            width: 60vw;
+            background-color: #ffffff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            position: relative;
+            }
+            body main #main header {
+            position: absolute;
+            top: 0;
+            padding: 20px;
+            }
+            body main #main .chart {
+            display: flex;
+            justify-content: center;
+            width: 25vw;
+            padding: 1.2em;
+            border-radius: 8px;
+            }
+            body main #user_det {
+            border-left: 1px solid #e5e5e5;
+            padding: 20px;
+            width: 20vw;
+            display: flex;
+            flex-direction: column;
+            }
+            body main #user_det #details, body main #user_det #extra {
+            margin-bottom: 2em;
+            }
+            body main #user_det #details h3, body main #user_det #extra h3 {
+            margin-bottom: 10px;
+            }
+            body main #user_det #details ul li, body main #user_det #extra ul li {
+            padding: 8px 10px;
+            }/*# sourceMappingURL=dashboard.css.map */
+    </style>
+	
+</head>
+<body>
+    <main>
+        
+        <section class="sidenav">
+            <h1>Pump IoT</h1>
+            <div>
+                <ul>
+                    <li id="active">Overview</li>
+                    <li>Notifications</li>
+                    <li>Reports</li>
+                </ul>
+            </div>
+        </section>
+
+        <section id="main">
+            <header>
+                <h1>Overview</h1>
+            </header>
+            <div class="chart">
+                <div id="chart-container">FusionCharts XT will load here!</div>
+                <!-- <canvas id="myChart"></canvas> -->
+            </div>
+        </section>
+        <section id="user_det">
+            <div id="details">
+                <h3>Pump Properties</h3>
+                <ul>
+                    <li>Voltage</li>
+                    <li>Current</li>
+                    <li>Speed</li>
+
+                </ul>
+            </div>
+            <div id="extra">
+                <h3>Tank Activity</h3>
+                <ul>
+                    <h5>Today</h5>
+                    <li>Water present</li>
+                    <li>Water Used</li>
+                    <h5>Yesterday</h5>
+                    <li>Water present</li>
+                    <li>Water Used</li>
+                    <li id="water"></li>
+                </ul>
+            </div>
+        </section>
+    </main>    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="js/doughnut.js"></script>
+    <script src="js/cylinder.js"></script>
+
+    
+
+<script>
+
+let usage;
+        let fulltank= 80;
+        usage = 20;
+        FusionCharts.ready(function(){
+                var chartObj = new FusionCharts({
+                    type: 'cylinder',
+                    dataFormat: 'json',
+                    renderAt: 'chart-container',
+                    width: '200',
+                    height: '350',
+                    dataSource: {
+                        "chart": {
+                            "theme": "fusion",
+                            "caption": "Water Level in the tank",
+                            "subcaption": "Gearbox A-7",
+                            "lowerLimit": "0",
+                            "upperLimit": fulltank,
+                            "lowerLimitDisplay": "Empty",
+                            "upperLimitDisplay": "Full",
+                            "numberSuffix": " ltrs",
+                            "showValue": "1",
+                            "chartBottomMargin": "40",
+                            "showValue": "0",
+                            "cylFillColor": "#5a7bfd"
+                        },
+                        "value": "90",
+                        "annotations": {
+                            "origw": "400",
+                            "origh": "190",
+                            "autoscale": "1",
+                            "groups": [{
+                                "id": "range",
+                                "items": [{
+                                    "id": "rangeBg",
+                                    "type": "rectangle",
+                                    "x": "$canvasCenterX-45",
+                                    "y": "$chartEndY-30",
+                                    "tox": "$canvasCenterX +45",
+                                    "toy": "$chartEndY-75",
+                                    "fillcolor": "#6caa03"
+                                }, {
+                                    "id": "rangeText",
+                                    "type": "Text",
+                                    "fontSize": "11",
+                                    "fillcolor": "#333333",
+                                    "text": "80 ltrs",
+                                    "x": "$chartCenterX-45",
+                                    "y": "$chartEndY-50"
+                                }]
+                            }]
+                        }
+
+                    },
+                    "events": {
+                        "rendered": function(evtObj, argObj) {
+                            var waterVolume = fulltank;
+                            evtObj.sender.chartInterval = setInterval(function() {
+                                (waterVolume < 10) ? (waterVolume = 80) : "";
+                                var consVolume = waterVolume - usage;
+                                evtObj.sender.feedData && evtObj.sender.feedData("&value=" + consVolume);
+                            }, 0);
+                        },
+                        //Using real time update event to update the annotation
+                        //showing available volume of Diesel
+                        "realTimeUpdateComplete": function(evt, arg) {
+                            var annotations = evt.sender.annotations,
+                                dataVal = evt.sender.getData(),
+                                colorVal = (dataVal >= 70) ? "#6caa03" : ((dataVal <= 35) ? "#e44b02" : "#f8bd1b");
+                            //Updating value
+                            annotations && annotations.update('rangeText', {
+                                "text": dataVal + " ltrs"
+                            });
+                            //Changing background color as per value
+                            annotations && annotations.update('rangeBg', {
+                                "fillcolor": colorVal
+                            });
+
+                        },
+                        "disposed": function(evt, arg) {
+                            clearInterval(evt.sender.chartInterval);
+                        }
+                    }
+                }
+                );
+                chartObj.render();
+            });
+</script>
+</body>
+</html>
