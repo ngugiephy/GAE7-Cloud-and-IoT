@@ -40,7 +40,7 @@ client.on('message', function(topic, message) {
 
 function storeMessageInDb(volume) {
   const connection = mysql.createConnection({
-    host: 'localhost',
+    host: '192.168.0.89',
     user: 'root',
     password: '2340917zC',
     database: 'somatank'
