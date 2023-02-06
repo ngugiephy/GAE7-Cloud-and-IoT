@@ -29,7 +29,8 @@ client.on('connect', function() {
 });
 
 client.on('message', function(topic, message) {
-  // Parse the message into a JavaScript object:
+    // Parse the message into a JavaScript object.
+    // .trim truncates the space in the data.
   const volume = message.toString().trim();
 
   // Store the message in the database:
@@ -55,7 +56,7 @@ function storeMessageInDb(volume) {
       connection.end();
     }
   );
-  connection.query(`SELECT * FROM pumpstats WHERE volume IS NOT NULL`,
+  connection.query(`SELECT volume FROM pumpstats ORDER BY id DESC LIMIT 1`,
     (err,result,fields)=>{
         io.on('connection',(socket)=>{
             console.log('A new user has connected');
@@ -64,6 +65,4 @@ function storeMessageInDb(volume) {
         })
   })
 }
-
-
 
