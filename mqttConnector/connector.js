@@ -6,7 +6,7 @@ import mysql from 'mysql2'
 import path from 'path'
 
 
-const client = mqtt.connect('mqtt://192.168.0.89');
+const client = mqtt.connect('mqtt://localhost:1883');
 const __dirname = path.resolve()
 const publicPath = path.join(__dirname, '/public')
 const app = express()
@@ -41,14 +41,13 @@ client.on('message', function(topic, message) {
 
 function storeMessageInDb(volume) {
   const connection = mysql.createConnection({
-    host: '192.168.0.89',
+    host: 'localhost',
     user: 'root',
-    password: '2340917zC',
+    password: ',.,.',
     database: 'somatank'
   });
 
-  connection.query(
-    `INSERT INTO pumpstats (volume,epoch) VALUES (?, CURRENT_TIMESTAMP)`,
+  connection.query(`INSERT INTO pumpstats (volume,epoch) VALUES (?, CURRENT_TIMESTAMP)`,
     [volume],
     function(error, results, fields) {
       if (error) throw error;
@@ -56,12 +55,13 @@ function storeMessageInDb(volume) {
       connection.end();
     }
   );
-  connection.query(`SELECT volume FROM pumpstats ORDER BY id DESC LIMIT 1`,
+  connection.query(`SELECT volume FROM pumpstats`,
     (err,result,fields)=>{
         io.on('connection',(socket)=>{
             console.log('A new user has connected');
-            console.log(result);
-            socket.emit('data', result)
+            console.log(result[result.length-1]);
+            let val = result[result.length-1]
+            socket.emit('data', val)
         })
   })
 }
